@@ -2,6 +2,8 @@
 
 namespace NFleet;
 include('../httpful.phar');
+include "NFleetException.php";
+include "MimeTypeHelper.php";
 
 class Api
 {
@@ -32,12 +34,13 @@ class Api
     }
 
     public function navigate($link, $data = null, $queryParams = null) {
+        $url = $this->url.$link->Uri;
         $request = \Httpful\Request::init()
             ->addHeader("Authorization", $this->getAuthorizationToken())
             ->method($link->Method)
-            ->uri($this->url.$link->Uri)
+            ->uri($url)
             ->addHeader("Accept",$link->Type)
-            ->contentType($link->Type);
+            ->contentType(findMimeTypeUsingUrl($url));
 
         if (($link->Method === "POST" || $link->Method === "PUT") && $data !== null) {
             if (property_exists($link, 'VersionNumber')) {
@@ -48,17 +51,22 @@ class Api
         $response = $request->send();
 
         $result = null;
-        if ($link->Method === "GET") {
+
+        if ($response->hasErrors()) {
             $result = $response->body;
+            throw new \NFleetException($result);
+        } else {
+            if ($link->Method === "GET") {
+                $result = $response->body;
 
-            if(isset($response->headers['etag'])){
-                $result->VersionNumber = $response->headers['etag'];
+                if(isset($response->headers['etag'])){
+                    $result->VersionNumber = $response->headers['etag'];
+                }
+
+            } elseif ($link->Method === "POST" || $link->Method === "PUT") {
+                $result = $this->createResponseData($response->headers['location'], $response->headers['Content-Type']);
             }
-
-        } elseif ($link->Method === "POST" || $link->Method === "PUT") {
-            $result = $this->createResponseData($response->headers['location'], $response->headers['Content-Type']);
         }
-
         return $result;
     }
 
