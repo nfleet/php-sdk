@@ -48,6 +48,34 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         return $problem;
     }
 
+    public function initWithDemoCase() {
+        $problem = $this->initWithProblem();
+
+        $startlocation = new stdClass();
+        $startlocation->Coordinate = new stdClass();
+        $startlocation->Coordinate->Latitude = "62.254622";
+        $startlocation->Coordinate->Longitude = "25.787020";
+        $startlocation->Coordinate->System = "WGS84";
+
+        $endlocation = new stdClass();
+        $endlocation->Coordinate = new stdClass();
+        $endlocation->Coordinate->Latitude = "62.254622";
+        $endlocation->Coordinate->Longitude = "25.787020";
+        $endlocation->Coordinate->System = "WGS84";
+
+        $vehicle = createVehicleWithName("vehicle1");
+        $task = createTaskWithName("Task1");
+
+        try {
+            $this->api->navigate(getLink($problem, "create-vehicle"), $vehicle);
+            $this->api->navigate(getLink($problem, "create-task"), $task);
+        } catch (NFleetException $e) {
+            var_dump($e);
+        }
+
+        return $problem;
+    }
+
     public function testGetRootLink() {
         $this->init();
         $root = $this->api->getRoot();
