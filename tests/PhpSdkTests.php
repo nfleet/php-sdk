@@ -242,4 +242,16 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         $this->assertNotNull($exception);
         $this->assertEquals(2, count($exception->Items));
     }
+    public function testListingTasks() {
+        $problem = $this->initWithDemoCase();
+        $tasks = null;
+        try {
+            $tasks = $this->api->navigate(getLink($problem, "list-tasks"));
+        } catch (NFleetException $e) {
+            var_dump($e);
+            $this->assertFail();
+        }
+        $this->assertNotNull($tasks);
+        $this->assertEquals(1, count($tasks->Items));
+    }
 }
