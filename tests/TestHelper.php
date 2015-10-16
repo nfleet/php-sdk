@@ -61,11 +61,11 @@ function createVehicleWithName($name) {
 
 
         $task = new stdClass();
-        $task->Name = "ExampleTask";
+        $task->Name = $name;
         $task->RelocationType = "None";
 
         $task->TaskEvents = array($pickup, $delivery);
-
+        return $task;
     }
 
    function createTimeWindowWithDuration($duration) {
