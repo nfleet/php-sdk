@@ -31,6 +31,7 @@ function findMimeTypeUsingUrl( $url )
     if ( contains( $url, "vehicles/" ) ) return $VehicleMime;
     if ( endsWith( $url, "depots" ) ) return $DepotSetMime;
     if ( contains( $url, "depots/" ) ) return $DepotMime;
+    if ( endsWith( $url, "imports" ) ) return $ImportMime;
     if ( endsWith( $url, "problems" ) ) return $ProblemSetMime;
     if ( contains( $url, "problems/" ) ) return $ProblemMime;
 
