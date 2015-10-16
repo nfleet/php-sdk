@@ -15,6 +15,8 @@ function findMimeTypeUsingUrl( $url )
     $RouteMime = "application/vnd.jyu.nfleet.route-2.0+json";
     $RouteEventMime = "application/vnd.jyu.nfleet.routeevent-2.0+json";
     $RouteEventSetMime = "application/vnd.jyu.nfleet.routeeventset-2.0+json";
+    $DepotMime = "application/vnd.jyu.nfleet.depot-2.2+json";
+    $DepotSetMime = "application/vnd.jyu.nfleet.depotset-2.2+json";
 
     if ( strlen( $url ) == 0 ) return "application/json";
 
@@ -27,8 +29,11 @@ function findMimeTypeUsingUrl( $url )
     if ( contains( $url, "tasks/" ) ) return $TaskMime;
     if ( endsWith( $url, "vehicles" ) ) return $VehicleSetMime;
     if ( contains( $url, "vehicles/" ) ) return $VehicleMime;
+    if ( endsWith( $url, "depots" ) ) return $DepotSetMime;
+    if ( contains( $url, "depots/" ) ) return $DepotMime;
     if ( endsWith( $url, "problems" ) ) return $ProblemSetMime;
     if ( contains( $url, "problems/" ) ) return $ProblemMime;
+
 
     return "application/json";
 }
