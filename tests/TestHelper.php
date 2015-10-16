@@ -76,3 +76,20 @@ function createVehicleWithName($name) {
         $timeWindow->End = $end->format('Y-m-d H:i:s');
         return $timeWindow;
     }
+
+   function createDepotWithName($name) {
+       $depot = new stdClass();
+
+       $depot->Name = $name;
+       $location= new stdClass();
+       $location->Coordinate = new stdClass();
+       $location->Coordinate->Latitude = "62.270538";
+       $location->Coordinate->Longitude = "26.057074";
+       $location->Coordinate->System = "WGS84";
+
+       $depot->Capacities = array(array("Amount"=>1000, "Name"=>"Weight"));
+       $depot->Location = $location;
+
+       return $depot;
+   }
+
