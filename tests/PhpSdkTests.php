@@ -242,6 +242,7 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         $this->assertNotNull($exception);
         $this->assertEquals(2, count($exception->Items));
     }
+
     public function testListingTasks() {
         $problem = $this->initWithDemoCase();
         $tasks = null;
@@ -253,5 +254,33 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         }
         $this->assertNotNull($tasks);
         $this->assertEquals(1, count($tasks->Items));
+    }
+
+    public function testCreatingDepot() {
+        $problem = $this->initWithProblem();
+
+        $created = null;
+        $depot = new stdClass();
+
+        $depot->Name = "depot";
+        $location= new stdClass();
+        $location->Coordinate = new stdClass();
+        $location->Coordinate->Latitude = "62.270538";
+        $location->Coordinate->Longitude = "26.057074";
+        $location->Coordinate->System = "WGS84";
+
+        $depot->Capacities = array(array("Amount"=>1000, "Name"=>"Weight"));
+        $depot->Location = $location;
+
+        try {
+            $res = $this->api->navigate(getLink($problem, "create-depot"), $depot);
+            $created = $this->api->navigate($res);
+        } catch (NFleetException $e) {
+            echo $e;
+            $this->assertFail();
+        }
+
+        $this->assertNotNull($created);
+        $this->assertEquals("depot", $created->Name);
     }
 }
