@@ -283,4 +283,43 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         $this->assertNotNull($created);
         $this->assertEquals("depot", $created->Name);
     }
+
+    public function testImportingVehiclesTasksAndDepots() {
+        $problem = $this->initWithProblem();
+
+        $task = createTaskWithName("task");
+        $vehicle = createVehicleWithName("vehicle");
+        $depot = createDepotWithName("depot");
+
+        $import = new stdClass();
+
+        $import->Vehicles = new stdClass();
+        $import->Vehicles->Items = array($vehicle);
+        $import->Tasks = new stdClass();
+        $import->Tasks->Items = array($task);
+        $import->Depots = new stdClass();
+        $import->Depots->Items = array($depot);
+        $res = null;
+
+        try {
+            $res = $this->api->navigate(getLink($problem, "import-data"), $import);
+        } catch (NFleetException $e) {
+            var_dump($e);
+        }
+
+        $this->assertNotNull($res);
+
+        $importRes = null;
+        try {
+            $import = $this->api->navigate($res);
+            var_dump($import);
+            $importRes = $this->api->navigate(getLink($import, "apply-import"));
+        } catch (NFleetException $e) {
+            var_dump($e);
+        }
+
+        $this->assertNotNull($importRes);
+        var_dump($importRes);
+    }
+
 }
