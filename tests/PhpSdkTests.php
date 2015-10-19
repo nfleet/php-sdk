@@ -322,4 +322,55 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         var_dump($importRes);
     }
 
+    public function testCaseWithDepotsAndAllowedRelocation() {
+        $problem = $this->initWithProblem();
+
+        $task = createTaskWithName("task1");
+        $task2 = createTaskWithName("task2");
+
+        $task->RelocationType = "Delivery";
+        $task2->RelocationType = "Delivery";
+
+        $vehicle = createVehicleWithName("vehicle");
+        $vehicle->RelocationType = "End";
+        $import = new stdClass();
+        $import->Vehicles = new stdClass();
+        $import->Vehicles->Items = array($vehicle);
+        $import->Tasks = new stdClass();
+        $import->Tasks->Items = array($task, $task2);
+        $import->Depots = new stdClass();
+        $import->Depots->Items = array();
+        $plan = null;
+        try {
+            $res = $this->api->navigate(getLink($problem, "import-data"), $import);
+            $import = $this->api->navigate($res);
+            $importRes = $this->api->navigate(getLink($import, "apply-import"));
+
+            $problem = $this->api->navigate(getLink($problem, "self"));
+
+            //Starting optimization
+            $toggleOpt = new stdClass();
+            $toggleOpt->State = "Running";
+            $toggleOpt->Name = $problem->Name;
+
+            $res = $this->api->navigate(getLink($problem, "toggle-optimization"), $toggleOpt);
+
+            $problem = $this->api->navigate(getLink($problem, "self"));
+
+            //Polling optimization while it runs
+            while ($problem->State === "Running") {
+                sleep(3);
+                $problem = $this->api->navigate(getLink($problem, "self"));
+            }
+
+            //Get the result of the optimization
+            $plan = $this->api->navigate(getLink($problem, "plan"));
+        } catch (NFleetException $e) {
+            var_dump($e);
+        }
+
+        $this->assertNotNull($plan);
+        $this->assertEquals(0, count($plan->Unassigned));
+    }
+
 }
