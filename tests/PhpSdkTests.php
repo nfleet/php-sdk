@@ -187,6 +187,35 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         $this->assertNotNull($exception);
         $this->assertEquals(2, count($exception->Items));
     }
+
+    public function testListTasksAndUpdate() {
+        $problem = $this->initWithProblem();
+        $task1 = createTaskWithName("task1");
+        $task2 = createTaskWithName("task2");
+        $tasks = null;
+        $task = null;
+        try {
+            $this->api->navigate(getLink($problem, "create-task"), $task1);
+            $this->api->navigate(getLink($problem, "create-task"), $task2);
+
+            //##BEGIN EXAMPLE listingtasks##
+            $tasks = $this->api->navigate(getLink($problem, "list-tasks"));
+            //##END EXAMPLE##
+
+            //##BEGIN EXAMPLE updatingtask##
+            $task = $this->api->navigate(getLink($tasks->Items[0], "self"));
+            $task->Name = "updatedTask1";
+            $this->api->navigate(getLink($task, "update"), $task);
+            //##END EXAMPLE##
+            $task = $this->api->navigate(getLink($task, "self"));
+        } catch (NFleetException $ex) {
+            var_dump($ex);
+        }
+
+        $this->assertEquals(2, count($tasks->Items));
+        $this->assertEquals("updatedTask1", $task->Name);
+    }
+
     public function init()  {
         $this->url = "https://test-api.nfleet.fi";
         $this->user = "clientkey";
