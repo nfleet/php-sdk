@@ -6,79 +6,20 @@ use NFleet\Api;
 
 
 class PhpSdkTests extends  PHPUnit_Framework_TestCase {
-
     private $api;
     private $url;
     private $user;
     private $pass;
 
-    public function init()  {
+    public function testGetRootLink() {
+        //##BEGIN EXAMPLE accessingapi##
         $this->url = "https://test-api.nfleet.fi";
         $this->user = "clientkey";
         $this->pass = "clientsecret";
         $this->api = new Api($this->url, $this->user, $this->pass);
-        $auth = $this->api->authenticate();
-    }
-
-    public function initWithUser() {
-        $this->init();
-        $user = null;
+        $this->api->authenticate();
         $root = $this->api->getRoot();
-
-        $resp = $this->api->navigate(getLink($root, "create-user"));
-        $user = $this->api->navigate($resp);
-        return $user;
-    }
-
-    public function initWithProblem() {
-        $this->init();
-        $user = null;
-        $root = $this->api->getRoot();
-
-        $resp = $this->api->navigate(getLink($root, "create-user"));
-        $user = $this->api->navigate($resp);
-
-        $update = new stdClass();
-
-        $update->Name = "TestProblem";
-
-        $resp = $this->api->navigate(getLink($user, "create-problem"), $update);
-        $problem = $this->api->navigate($resp);
-
-        return $problem;
-    }
-
-    public function initWithDemoCase() {
-        $problem = $this->initWithProblem();
-
-        $startlocation = new stdClass();
-        $startlocation->Coordinate = new stdClass();
-        $startlocation->Coordinate->Latitude = "62.254622";
-        $startlocation->Coordinate->Longitude = "25.787020";
-        $startlocation->Coordinate->System = "WGS84";
-
-        $endlocation = new stdClass();
-        $endlocation->Coordinate = new stdClass();
-        $endlocation->Coordinate->Latitude = "62.254622";
-        $endlocation->Coordinate->Longitude = "25.787020";
-        $endlocation->Coordinate->System = "WGS84";
-
-        $vehicle = createVehicleWithName("vehicle1");
-        $task = createTaskWithName("Task1");
-
-        try {
-            $this->api->navigate(getLink($problem, "create-vehicle"), $vehicle);
-            $this->api->navigate(getLink($problem, "create-task"), $task);
-        } catch (NFleetException $e) {
-            var_dump($e);
-        }
-
-        return $problem;
-    }
-
-    public function testGetRootLink() {
-        $this->init();
-        $root = $this->api->getRoot();
+        //##END EXAMPLE##
         $this->assertNotNull($root);
         unset($api);
     }
@@ -96,13 +37,16 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
 
     public function testCreateProblem() {
         $user = $this->initWithUser();
-        $update = new stdClass();
 
-        $update->Name = "TestProblem";
+        //##BEGIN EXAMPLE creatingproblem##
+        $problem = new stdClass();
+        $problem->Name = "TestProblem";
+        $response = $this->api->navigate(getLink($user, "create-problem"), $problem);
+        //##END EXAMPLE##
 
-        $resp = $this->api->navigate(getLink($user, "create-problem"), $update);
-        $problem = $this->api->navigate($resp);
-
+        //##BEGIN EXAMPLE accessingnewproblem##
+        $problem = $this->api->navigate($response);
+        //##END EXAMPLE##
         $this->assertNotNull($problem);
         unset($api);
     }
@@ -151,7 +95,7 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
 
     public function testCreateTask() {
         $problem = $this->initWithProblem();
-
+        //##BEGIN EXAMPLE creatingtask##
         $taskpickup = new stdClass();
         $taskpickup->Coordinate = new stdClass();
         $taskpickup->Coordinate->Latitude = "62.254622";
@@ -182,8 +126,9 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
 
         $task->TaskEvents = array($pickup, $delivery);
 
-        $resp = $this->api->navigate(getLink($problem, "create-task"), $task);
-        $t = $this->api->navigate($resp);
+        $response = $this->api->navigate(getLink($problem, "create-task"), $task);
+        //##END EXAMPLE##
+        $t = $this->api->navigate($response);
         $this->assertEquals("ExampleTask", $t->Name);
     }
 
@@ -243,134 +188,67 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         $this->assertEquals(2, count($exception->Items));
     }
 
-    public function testListingTasks() {
-        $problem = $this->initWithDemoCase();
-        $tasks = null;
-        try {
-            $tasks = $this->api->navigate(getLink($problem, "list-tasks"));
-        } catch (NFleetException $e) {
-            var_dump($e);
-            $this->assertFail();
-        }
-        $this->assertNotNull($tasks);
-        $this->assertEquals(1, count($tasks->Items));
-    }
-
-    public function testCreatingDepot() {
+    public function testListTasksAndUpdate() {
         $problem = $this->initWithProblem();
-
-        $created = null;
-        $depot = new stdClass();
-
-        $depot->Name = "depot";
-        $location= new stdClass();
-        $location->Coordinate = new stdClass();
-        $location->Coordinate->Latitude = "62.270538";
-        $location->Coordinate->Longitude = "26.057074";
-        $location->Coordinate->System = "WGS84";
-
-        $depot->Capacities = array(array("Amount"=>1000, "Name"=>"Weight"));
-        $depot->Location = $location;
-
-        try {
-            $res = $this->api->navigate(getLink($problem, "create-depot"), $depot);
-            $created = $this->api->navigate($res);
-        } catch (NFleetException $e) {
-            echo $e;
-            $this->assertFail();
-        }
-
-        $this->assertNotNull($created);
-        $this->assertEquals("depot", $created->Name);
-    }
-
-    public function testImportingVehiclesTasksAndDepots() {
-        $problem = $this->initWithProblem();
-
-        $task = createTaskWithName("task");
-        $vehicle = createVehicleWithName("vehicle");
-        $depot = createDepotWithName("depot");
-
-        $import = new stdClass();
-
-        $import->Vehicles = new stdClass();
-        $import->Vehicles->Items = array($vehicle);
-        $import->Tasks = new stdClass();
-        $import->Tasks->Items = array($task);
-        $import->Depots = new stdClass();
-        $import->Depots->Items = array($depot);
-        $res = null;
-
-        try {
-            $res = $this->api->navigate(getLink($problem, "import-data"), $import);
-        } catch (NFleetException $e) {
-            var_dump($e);
-        }
-
-        $this->assertNotNull($res);
-
-        $importRes = null;
-        try {
-            $import = $this->api->navigate($res);
-            var_dump($import);
-            $importRes = $this->api->navigate(getLink($import, "apply-import"));
-        } catch (NFleetException $e) {
-            var_dump($e);
-        }
-
-        $this->assertNotNull($importRes);
-        var_dump($importRes);
-    }
-
-    public function testCaseWithDepotsAndAllowedRelocation() {
-        $problem = $this->initWithProblem();
-
-        $task = createTaskWithName("task1");
+        $task1 = createTaskWithName("task1");
         $task2 = createTaskWithName("task2");
-
-        $task->RelocationType = "Delivery";
-        $task2->RelocationType = "Delivery";
-
-        $vehicle = createVehicleWithName("vehicle");
-        $vehicle->RelocationType = "End";
-        $import = new stdClass();
-        $import->Vehicles = new stdClass();
-        $import->Vehicles->Items = array($vehicle);
-        $import->Tasks = new stdClass();
-        $import->Tasks->Items = array($task, $task2);
-        $import->Depots = new stdClass();
-        $import->Depots->Items = array();
-        $plan = null;
+        $tasks = null;
+        $task = null;
         try {
-            $res = $this->api->navigate(getLink($problem, "import-data"), $import);
-            $import = $this->api->navigate($res);
-            $importRes = $this->api->navigate(getLink($import, "apply-import"));
+            $this->api->navigate(getLink($problem, "create-task"), $task1);
+            $this->api->navigate(getLink($problem, "create-task"), $task2);
 
-            $problem = $this->api->navigate(getLink($problem, "self"));
+            //##BEGIN EXAMPLE listingtasks##
+            $tasks = $this->api->navigate(getLink($problem, "list-tasks"));
+            //##END EXAMPLE##
 
-            //Starting optimization
-            $toggleOpt = new stdClass();
-            $toggleOpt->State = "Running";
-            $toggleOpt->Name = $problem->Name;
-
-            $res = $this->api->navigate(getLink($problem, "toggle-optimization"), $toggleOpt);
-
-            $problem = $this->api->navigate(getLink($problem, "self"));
-
-            //Polling optimization while it runs
-            while ($problem->State === "Running") {
-                sleep(3);
-                $problem = $this->api->navigate(getLink($problem, "self"));
-            }
-
-            //Get the result of the optimization
-            $plan = $this->api->navigate(getLink($problem, "plan"));
-        } catch (NFleetException $e) {
-            var_dump($e);
+            //##BEGIN EXAMPLE updatingtask##
+            $task = $this->api->navigate(getLink($tasks->Items[0], "self"));
+            $task->Name = "updatedTask1";
+            $this->api->navigate(getLink($task, "update"), $task);
+            //##END EXAMPLE##
+            $task = $this->api->navigate(getLink($task, "self"));
+        } catch (NFleetException $ex) {
+            var_dump($ex);
         }
 
-        $this->assertNotNull($plan);
-        $this->assertEquals(0, count($plan->Unassigned));
+        $this->assertEquals(2, count($tasks->Items));
+        $this->assertEquals("updatedTask1", $task->Name);
     }
 
+    public function init()  {
+        $this->url = "https://test-api.nfleet.fi";
+        $this->user = "clientkey";
+        $this->pass = "clientsecret";
+        $this->api = new Api($this->url, $this->user, $this->pass);
+        $auth = $this->api->authenticate();
+    }
+
+    public function initWithUser() {
+        $this->init();
+        $user = null;
+        $root = $this->api->getRoot();
+
+        $resp = $this->api->navigate(getLink($root, "create-user"));
+        $user = $this->api->navigate($resp);
+        return $user;
+    }
+
+    public function initWithProblem() {
+        $this->init();
+        $user = null;
+        $root = $this->api->getRoot();
+
+        $resp = $this->api->navigate(getLink($root, "create-user"));
+        $user = $this->api->navigate($resp);
+
+        $update = new stdClass();
+
+        $update->Name = "TestProblem";
+
+        $resp = $this->api->navigate(getLink($user, "create-problem"), $update);
+        $problem = $this->api->navigate($resp);
+
+        return $problem;
+    }
 }
