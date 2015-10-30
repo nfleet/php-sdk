@@ -6,51 +6,20 @@ use NFleet\Api;
 
 
 class PhpSdkTests extends  PHPUnit_Framework_TestCase {
-
     private $api;
     private $url;
     private $user;
     private $pass;
 
-    public function init()  {
+    public function testGetRootLink() {
+        //##BEGIN EXAMPLE accessingapi##
         $this->url = "https://test-api.nfleet.fi";
         $this->user = "clientkey";
         $this->pass = "clientsecret";
         $this->api = new Api($this->url, $this->user, $this->pass);
-        $auth = $this->api->authenticate();
-    }
-
-    public function initWithUser() {
-        $this->init();
-        $user = null;
+        $this->api->authenticate();
         $root = $this->api->getRoot();
-
-        $resp = $this->api->navigate(getLink($root, "create-user"));
-        $user = $this->api->navigate($resp);
-        return $user;
-    }
-
-    public function initWithProblem() {
-        $this->init();
-        $user = null;
-        $root = $this->api->getRoot();
-
-        $resp = $this->api->navigate(getLink($root, "create-user"));
-        $user = $this->api->navigate($resp);
-
-        $update = new stdClass();
-
-        $update->Name = "TestProblem";
-
-        $resp = $this->api->navigate(getLink($user, "create-problem"), $update);
-        $problem = $this->api->navigate($resp);
-
-        return $problem;
-    }
-
-    public function testGetRootLink() {
-        $this->init();
-        $root = $this->api->getRoot();
+        //##END EXAMPLE##
         $this->assertNotNull($root);
         unset($api);
     }
@@ -213,5 +182,40 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
         echo $exception;
         $this->assertNotNull($exception);
         $this->assertEquals(2, count($exception->Items));
+    }
+    public function init()  {
+        $this->url = "https://test-api.nfleet.fi";
+        $this->user = "clientkey";
+        $this->pass = "clientsecret";
+        $this->api = new Api($this->url, $this->user, $this->pass);
+        $auth = $this->api->authenticate();
+    }
+
+    public function initWithUser() {
+        $this->init();
+        $user = null;
+        $root = $this->api->getRoot();
+
+        $resp = $this->api->navigate(getLink($root, "create-user"));
+        $user = $this->api->navigate($resp);
+        return $user;
+    }
+
+    public function initWithProblem() {
+        $this->init();
+        $user = null;
+        $root = $this->api->getRoot();
+
+        $resp = $this->api->navigate(getLink($root, "create-user"));
+        $user = $this->api->navigate($resp);
+
+        $update = new stdClass();
+
+        $update->Name = "TestProblem";
+
+        $resp = $this->api->navigate(getLink($user, "create-problem"), $update);
+        $problem = $this->api->navigate($resp);
+
+        return $problem;
     }
 }
