@@ -37,13 +37,16 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
 
     public function testCreateProblem() {
         $user = $this->initWithUser();
-        $update = new stdClass();
 
-        $update->Name = "TestProblem";
+        //##BEGIN EXAMPLE creatingproblem##
+        $problem = new stdClass();
+        $problem->Name = "TestProblem";
+        $response = $this->api->navigate(getLink($user, "create-problem"), $problem);
+        //##END EXAMPLE##
 
-        $resp = $this->api->navigate(getLink($user, "create-problem"), $update);
-        $problem = $this->api->navigate($resp);
-
+        //##BEGIN EXAMPLE accessingnewproblem##
+        $problem = $this->api->navigate($response);
+        //##END EXAMPLE##
         $this->assertNotNull($problem);
         unset($api);
     }
@@ -92,7 +95,7 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
 
     public function testCreateTask() {
         $problem = $this->initWithProblem();
-
+        //##BEGIN EXAMPLE creatingtask##
         $taskpickup = new stdClass();
         $taskpickup->Coordinate = new stdClass();
         $taskpickup->Coordinate->Latitude = "62.254622";
@@ -123,8 +126,9 @@ class PhpSdkTests extends  PHPUnit_Framework_TestCase {
 
         $task->TaskEvents = array($pickup, $delivery);
 
-        $resp = $this->api->navigate(getLink($problem, "create-task"), $task);
-        $t = $this->api->navigate($resp);
+        $response = $this->api->navigate(getLink($problem, "create-task"), $task);
+        //##END EXAMPLE##
+        $t = $this->api->navigate($response);
         $this->assertEquals("ExampleTask", $t->Name);
     }
 
